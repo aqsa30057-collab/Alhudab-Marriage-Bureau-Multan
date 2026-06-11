@@ -4,7 +4,7 @@ const app = express();
 app.use(express.json());
 
 const VERIFY_TOKEN = "alhuda123";
-const WHATSAPP_TOKEN = "YAHAN_APNA_ACCESS_TOKEN_LIKHO";
+const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN || "YAHAN_APNA_ACCESS_TOKEN_LIKHO";
 const PHONE_NUMBER_ID = "1141866679012205";
 
 // Webhook verify
@@ -45,4 +45,35 @@ async function getAIReply(userMessage) {
       - Registration Fee: Rs. 15,000 (discounted from Rs. 25,000)
       - Services: Rishta matching, profile creation, confidential meetings
       - Contact: Available via WhatsApp
-      Always be polite, professional and helpful.
+      Always be polite, professional and helpful.`,
+      messages: [{ role: 'user', content: userMessage }]
+    }, {
+      headers: {
+        'x-api-key': process.env.CLAUDE_API_KEY || 'test',
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json'
+      }
+    });
+    return response.data.content[0].text;
+  } catch (error) {
+    return "Shukriya aapke message ka! Hum jald aapse rabta karenge. 😊";
+  }
+}
+
+// WhatsApp message bhejo
+async function sendMessage(to, message) {
+  await axios.post(
+    `https://graph.facebook.com/v18.0/${PHONE_NUMBER_ID}/messages`,
+    {
+      messaging_product: 'whatsapp',
+      to: to,
+      text: { body: message }
+    },
+    {
+      headers: { Authorization: `Bearer ${WHATSAPP_TOKEN}` }
+    }
+  );
+}
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log('Alhuda Chatbot chal raha hai port ' + PORT));
